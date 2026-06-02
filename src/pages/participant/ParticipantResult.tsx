@@ -9,9 +9,25 @@ import {
   getDoc,
   where,
   orderBy,
+  Timestamp,
 } from 'firebase/firestore'
 import { Participant } from '@/types'
 import './Participant.css'
+
+// Firebase Timestamp를 숫자(초)로 변환하는 함수
+const getTimestampSeconds = (timestamp: any): number => {
+  if (!timestamp) return 0
+  if (timestamp instanceof Timestamp) {
+    return timestamp.seconds
+  }
+  if (typeof timestamp === 'object' && timestamp.seconds !== undefined) {
+    return timestamp.seconds
+  }
+  if (typeof timestamp === 'number') {
+    return timestamp
+  }
+  return 0
+}
 
 interface RankingInfo extends Participant {
   completedTime?: number
@@ -69,13 +85,10 @@ export default function ParticipantResult() {
     )
   }
 
-  const completedTime = participant.completedAt
-    ? Math.floor(
-        (new Date(participant.completedAt as any).getTime() -
-          new Date(participant.createdAt).getTime()) /
-          1000
-      )
-    : 0
+  // Firebase Timestamp를 초 단위로 변환
+  const createdSeconds = getTimestampSeconds(participant.createdAt)
+  const completedSeconds = getTimestampSeconds(participant.completedAt)
+  const completedTime = completedSeconds - createdSeconds
 
   const minutes = Math.floor(completedTime / 60)
   const seconds = completedTime % 60
@@ -113,13 +126,11 @@ export default function ParticipantResult() {
                 <td>{index + 1}</td>
                 <td>{rank.groupName}</td>
                 <td>
-                  {rank.completedAt
+                  {rank.completedAt && rank.createdAt
                     ? (() => {
-                        const time = Math.floor(
-                          (new Date(rank.completedAt as any).getTime() -
-                            new Date(rank.createdAt).getTime()) /
-                            1000
-                        )
+                        const createdSec = getTimestampSeconds(rank.createdAt)
+                        const completedSec = getTimestampSeconds(rank.completedAt)
+                        const time = completedSec - createdSec
                         const m = Math.floor(time / 60)
                         const s = time % 60
                         return `${m}:${s.toString().padStart(2, '0')}`
