@@ -3,12 +3,9 @@ import { useNavigate, useParams } from 'react-router-dom'
 import { db } from '@/utils/firebase'
 import {
   collection,
-  query,
   getDocs,
   doc,
   getDoc,
-  where,
-  orderBy,
   Timestamp,
 } from 'firebase/firestore'
 import { Participant } from '@/types'
@@ -43,28 +40,54 @@ export default function ParticipantResult() {
   useEffect(() => {
     const loadData = async () => {
       try {
-        // 현재 참가자 정보
+        // 현재 참가자 정보 로드
         const participantRef = doc(db, `games/${gameId}/participants/${teamId}`)
         const participantSnap = await getDoc(participantRef)
-        if (participantSnap.exists()) {
+
+        if (!participantSnap.exists()) {
+          setLoading(false)
+          return
+        }
+
+        const participantData = participantSnap.data() as Participant
+
+        // 상태가 completed가 될 때까지 재시도 (최대 10초)
+        let status = participantData.status
+        let retries = 0
+        while (status !== 'completed' && retries < 20) {
+          await new Promise(resolve => setTimeout(resolve, 500))
+          const retry = await getDoc(participantRef)
+          if (retry.exists()) {
+            status = (retry.data() as Participant).status
+          }
+          retries++
+        }
+
+        if (status === 'completed') {
           setParticipant(participantSnap.data() as Participant)
         }
 
-        // 모든 참가자 정보 로드 (순위 계산)
+        // 모든 참가자 정보 로드 (순위 계산) - completedAt이 있는 모든 참가자
         const participantsRef = collection(db, `games/${gameId}/participants`)
-        const q = query(
-          participantsRef,
-          where('status', '==', 'completed'),
-          orderBy('completedAt', 'asc')
-        )
-        const snapshot = await getDocs(q)
-        const rankingsData = snapshot.docs.map((doc, index) => ({
-          teamId: doc.id,
-          rank: index + 1,
-          ...doc.data(),
-        } as RankingInfo))
-        setRankings(rankingsData)
+        const snapshot = await getDocs(participantsRef)
 
+        const rankingsData = snapshot.docs
+          .filter(doc => {
+            const data = doc.data() as Participant
+            return data.completedAt && data.status === 'completed'
+          })
+          .sort((a, b) => {
+            const aTime = getTimestampSeconds(a.data().completedAt)
+            const bTime = getTimestampSeconds(b.data().completedAt)
+            return aTime - bTime
+          })
+          .map((doc, index) => ({
+            teamId: doc.id,
+            rank: index + 1,
+            ...doc.data(),
+          } as RankingInfo))
+
+        setRankings(rankingsData)
         setLoading(false)
       } catch (err) {
         console.error('데이터 로드 실패:', err)
