@@ -18,6 +18,26 @@ export default function ParticipantOrientation() {
         <h1>🎮 게임 시작</h1>
         <p className="subtitle">오리엔테이션</p>
 
+        {/* 스토리 섹션 */}
+        <div style={{
+          background: 'linear-gradient(135deg, #f093fb 0%, #f5576c 100%)',
+          color: 'white',
+          padding: '1.5rem',
+          borderRadius: '12px',
+          marginBottom: '2rem',
+          lineHeight: 1.8,
+          fontSize: '0.95rem',
+          fontWeight: 500
+        }}>
+          <p style={{ margin: 0 }}>
+            목포 시화마을의 오래된 골목길을 걷던 당신, 발밑에 떨어진 낡은 수첩 하나를 발견합니다.<br/>
+            수첩의 첫 장에는 시화마을 곳곳에 특별한 보물(추억)을 숨겨두었다는 낙서가 적혀 있습니다.<br/>
+            <br/>
+            <strong>골목 구석구석 숨겨진 7개의 퀴즈를 풀고,<br/>
+            시화마을의 '진짜 매력'을 완성해 주세요!</strong>
+          </p>
+        </div>
+
         <div style={{ fontSize: '1rem', lineHeight: 1.8, color: '#555', marginBottom: '2rem' }}>
           <h3 style={{ marginBottom: '1rem', color: '#333' }}>게임 규칙</h3>
           <ul style={{ marginLeft: '1.5rem', marginBottom: '1rem' }}>
