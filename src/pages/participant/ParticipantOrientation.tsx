@@ -72,6 +72,8 @@ export default function ParticipantOrientation() {
             <img
               src={orientation.imageUrl}
               alt="오리엔테이션 이미지"
+              loading="lazy"
+              decoding="async"
               style={{
                 width: '100%',
                 maxHeight: '300px',

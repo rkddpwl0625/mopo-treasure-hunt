@@ -229,6 +229,8 @@ export default function ParticipantGame() {
                 src={currentQuestion.imageUrl}
                 alt="문제 이미지"
                 className="question-image"
+                loading="lazy"
+                decoding="async"
               />
             )}
           </div>

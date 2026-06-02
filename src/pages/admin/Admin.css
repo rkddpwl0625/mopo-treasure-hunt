@@ -399,3 +399,164 @@
   background: #fef0e0;
   color: #f5a623;
 }
+
+/* 문제 설정 그리드 */
+.questions-grid {
+  display: grid;
+  grid-template-columns: 300px 1fr;
+  gap: 2rem;
+}
+
+/* 모바일 반응형 스타일 */
+@media (max-width: 1024px) {
+  .questions-grid {
+    grid-template-columns: 1fr;
+  }
+}
+
+@media (max-width: 768px) {
+  .admin-container {
+    padding: 1rem 0.5rem;
+  }
+
+  .admin-header {
+    flex-direction: column;
+    align-items: flex-start;
+    margin-bottom: 1.5rem;
+  }
+
+  .admin-header h1 {
+    font-size: 1.5rem;
+    margin-bottom: 1rem;
+  }
+
+  .btn-logout {
+    padding: 0.6rem 1.2rem;
+    font-size: 0.9rem;
+  }
+
+  .admin-card {
+    padding: 1.5rem;
+    border-radius: 8px;
+  }
+
+  .admin-card h2 {
+    font-size: 1.3rem;
+  }
+
+  .settings-container {
+    padding: 0 0.5rem;
+  }
+
+  .settings-card {
+    padding: 1rem;
+    margin-bottom: 1rem;
+  }
+
+  .settings-card h2 {
+    font-size: 1.2rem;
+    margin-bottom: 1rem;
+  }
+
+  .settings-card h3 {
+    font-size: 1rem;
+  }
+
+  .question-editor input,
+  .question-editor textarea,
+  .question-editor select {
+    padding: 0.6rem;
+    font-size: 16px; /* iOS 줌인 방지 */
+    margin-bottom: 0.75rem;
+  }
+
+  .question-editor textarea {
+    min-height: 80px;
+  }
+
+  .hint-item {
+    flex-direction: column;
+    padding: 0.75rem;
+  }
+
+  .hint-item input {
+    width: 100%;
+    margin-bottom: 0.5rem;
+  }
+
+  .hint-item button {
+    width: 100%;
+    padding: 0.6rem;
+  }
+
+  .question-item {
+    padding: 1rem;
+  }
+
+  .question-item h3 {
+    font-size: 1rem;
+  }
+
+  .question-item p {
+    font-size: 0.85rem;
+  }
+
+  .game-actions {
+    flex-direction: column;
+  }
+
+  .btn-edit,
+  .btn-results {
+    padding: 0.6rem;
+    font-size: 0.85rem;
+  }
+
+  .results-table {
+    font-size: 0.85rem;
+  }
+
+  .results-table th,
+  .results-table td {
+    padding: 0.5rem;
+  }
+
+  label {
+    display: block;
+    margin-bottom: 0.4rem;
+    font-weight: 600;
+    font-size: 0.95rem;
+  }
+}
+
+@media (max-width: 600px) {
+  .games-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .game-card {
+    padding: 1rem;
+  }
+
+  .game-card h3 {
+    font-size: 1rem;
+  }
+
+  .game-info {
+    padding: 0.75rem;
+    font-size: 0.8rem;
+  }
+
+  .btn-create {
+    width: 100%;
+    padding: 0.6rem;
+    font-size: 0.9rem;
+  }
+
+  .create-form {
+    padding: 1rem;
+  }
+
+  .create-form input {
+    font-size: 16px; /* iOS 줌인 방지 */
+  }
+}

@@ -253,7 +253,7 @@ export default function AdminGameSettings() {
 
         {/* 문제 설정 탭 */}
         {activeTab === 'questions' && (
-        <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '2rem' }}>
+        <div className="questions-grid">
           <div>
             <h3>문제 목록</h3>
             <div className="question-list">
