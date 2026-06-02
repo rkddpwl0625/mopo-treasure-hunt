@@ -1,9 +1,48 @@
+import { useState, useEffect } from 'react'
 import { useNavigate, useParams } from 'react-router-dom'
+import { db } from '@/utils/firebase'
+import { doc, getDoc } from 'firebase/firestore'
+import { Orientation } from '@/types'
 import './Participant.css'
 
 export default function ParticipantOrientation() {
   const navigate = useNavigate()
   const { gameId, teamId } = useParams<{ gameId: string; teamId: string }>()
+  const [orientation, setOrientation] = useState<Orientation>({ story: '' })
+  const [loading, setLoading] = useState(true)
+
+  useEffect(() => {
+    const loadOrientation = async () => {
+      try {
+        const gameRef = doc(db, `games/${gameId}`)
+        const gameSnap = await getDoc(gameRef)
+        if (gameSnap.exists()) {
+          const gameData = gameSnap.data()
+          if (gameData.orientation) {
+            setOrientation(gameData.orientation)
+          }
+        }
+      } catch (err) {
+        console.error('오리엔테이션 로드 실패:', err)
+      } finally {
+        setLoading(false)
+      }
+    }
+
+    if (gameId) {
+      loadOrientation()
+    }
+  }, [gameId])
+
+  if (loading) {
+    return (
+      <div className="participant-container">
+        <div className="participant-card">
+          <p>로딩 중...</p>
+        </div>
+      </div>
+    )
+  }
 
   return (
     <div className="participant-container">
@@ -29,12 +68,24 @@ export default function ParticipantOrientation() {
           fontSize: '0.95rem',
           fontWeight: 500
         }}>
-          <p style={{ margin: 0 }}>
-            목포 시화마을의 오래된 골목길을 걷던 당신, 발밑에 떨어진 낡은 수첩 하나를 발견합니다.<br/>
-            수첩의 첫 장에는 시화마을 곳곳에 특별한 보물(추억)을 숨겨두었다는 낙서가 적혀 있습니다.<br/>
-            <br/>
-            <strong>골목 구석구석 숨겨진 7개의 퀴즈를 풀고,<br/>
-            시화마을의 '진짜 매력'을 완성해 주세요!</strong>
+          {orientation.imageUrl && (
+            <img
+              src={orientation.imageUrl}
+              alt="오리엔테이션 이미지"
+              style={{
+                width: '100%',
+                maxHeight: '300px',
+                objectFit: 'cover',
+                borderRadius: '8px',
+                marginBottom: '1rem'
+              }}
+            />
+          )}
+          {orientation.title && (
+            <h2 style={{ margin: '0 0 1rem 0', fontSize: '1.3rem' }}>{orientation.title}</h2>
+          )}
+          <p style={{ margin: 0, whiteSpace: 'pre-wrap' }}>
+            {orientation.story}
           </p>
         </div>
 

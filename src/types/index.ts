@@ -14,12 +14,19 @@ export interface Question {
   createdAt: Date
 }
 
+export interface Orientation {
+  title?: string
+  story: string
+  imageUrl?: string
+}
+
 export interface Game {
   gameId: string
   title: string
   status: 'active' | 'archived'
   code: string
   createdAt: Date
+  orientation?: Orientation
   questions?: Question[]
 }
 
