@@ -29,6 +29,10 @@ export default function AdminGameSettings() {
     loadQuestions()
   }, [gameId])
 
+  useEffect(() => {
+    setTempAnswer('')
+  }, [selectedQuestion?.questionId])
+
   const loadQuestions = async () => {
     try {
       const questionsRef = collection(db, `games/${gameId}/questions`)
