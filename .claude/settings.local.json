@@ -1,0 +1,26 @@
+{
+  "permissions": {
+    "allow": [
+      "mcp__Claude_in_Chrome__tabs_context_mcp",
+      "mcp__Claude_in_Chrome__switch_browser",
+      "mcp__Claude_in_Chrome__browser_batch",
+      "Bash(kill 29221)",
+      "mcp__Claude_in_Chrome__navigate",
+      "mcp__Claude_in_Chrome__computer",
+      "Bash(open -a \"Google Chrome\" \"/Users/bella/Desktop/클로드/업무일지.html\")",
+      "Bash(npm create *)",
+      "Bash(rm -rf ~/.npm && npm create vite@latest . -- --template react-ts --yes)",
+      "Bash(npm cache *)",
+      "Bash(sudo chown -R 501:20 /Users/bella/.npm)",
+      "Bash(npm install *)",
+      "Bash(npm config *)",
+      "Bash(curl -s http://localhost:5173)",
+      "mcp__Claude_in_Chrome__tabs_create_mcp",
+      "Bash(pkill -f \"npm run dev\")",
+      "mcp__Claude_Preview__preview_start",
+      "Bash(git init *)",
+      "Bash(git add *)",
+      "Bash(git commit *)"
+    ]
+  }
+}
