@@ -147,25 +147,58 @@ export default function AdminGameSettings() {
     if (!selectedQuestion || !e.target.files?.[0]) return
 
     const file = e.target.files[0]
+
+    // 파일 크기 체크 (5MB 이상이면 거절)
+    if (file.size > 5 * 1024 * 1024) {
+      alert('파일 크기는 5MB 이하여야 합니다')
+      if (fileInputRef.current) {
+        fileInputRef.current.value = ''
+      }
+      return
+    }
+
     setSaving(true)
 
     try {
       const storageRef = ref(
         storage,
-        `games/${gameId}/questions/${selectedQuestion.questionId}/${file.name}`
+        `games/${gameId}/questions/${selectedQuestion.questionId}/${Date.now()}-${file.name}`
       )
-      await uploadBytes(storageRef, file)
-      const downloadURL = await getDownloadURL(storageRef)
 
+      // 업로드 시작
+      console.log('파일 업로드 시작:', file.name)
+      const uploadTask = await uploadBytes(storageRef, file)
+      console.log('파일 업로드 완료:', uploadTask.metadata.name)
+
+      // URL 가져오기
+      const downloadURL = await getDownloadURL(storageRef)
+      console.log('다운로드 URL 획득:', downloadURL)
+
+      // Firebase 업데이트
       await handleUpdateQuestion('imageUrl', downloadURL)
+      console.log('이미지 URL 저장 완료')
 
       // 파일 input 리셋
       if (fileInputRef.current) {
         fileInputRef.current.value = ''
       }
-    } catch (err) {
-      console.error('이미지 업로드 실패:', err)
-      alert('이미지 업로드 실패')
+
+      alert('이미지 업로드 완료!')
+    } catch (err: any) {
+      console.error('이미지 업로드 실패 상세:', {
+        message: err.message,
+        code: err.code,
+        fullError: err
+      })
+
+      const errorMsg = err.code === 'storage/unauthorized'
+        ? '업로드 권한이 없습니다. Firebase Storage 규칙을 확인해주세요.'
+        : err.code === 'storage/unauthenticated'
+        ? '인증이 필요합니다.'
+        : `이미지 업로드 실패: ${err.message}`
+
+      alert(errorMsg)
+
       // 실패 시에도 input 리셋
       if (fileInputRef.current) {
         fileInputRef.current.value = ''
@@ -194,21 +227,52 @@ export default function AdminGameSettings() {
     if (!e.target.files?.[0]) return
 
     const file = e.target.files[0]
+
+    // 파일 크기 체크 (5MB 이상이면 거절)
+    if (file.size > 5 * 1024 * 1024) {
+      alert('파일 크기는 5MB 이하여야 합니다')
+      if (orientationFileInputRef.current) {
+        orientationFileInputRef.current.value = ''
+      }
+      return
+    }
+
     setSaving(true)
 
     try {
-      const storageRef = ref(storage, `games/${gameId}/orientation/${file.name}`)
-      await uploadBytes(storageRef, file)
+      const storageRef = ref(storage, `games/${gameId}/orientation/${Date.now()}-${file.name}`)
+
+      console.log('오리엔테이션 이미지 업로드 시작:', file.name)
+      const uploadTask = await uploadBytes(storageRef, file)
+      console.log('오리엔테이션 이미지 업로드 완료:', uploadTask.metadata.name)
+
       const downloadURL = await getDownloadURL(storageRef)
+      console.log('오리엔테이션 이미지 URL 획득:', downloadURL)
+
       await handleUpdateOrientation('imageUrl', downloadURL)
+      console.log('오리엔테이션 이미지 URL 저장 완료')
 
       // 파일 input 리셋
       if (orientationFileInputRef.current) {
         orientationFileInputRef.current.value = ''
       }
-    } catch (err) {
-      console.error('오리엔테이션 이미지 업로드 실패:', err)
-      alert('이미지 업로드 실패')
+
+      alert('이미지 업로드 완료!')
+    } catch (err: any) {
+      console.error('오리엔테이션 이미지 업로드 실패 상세:', {
+        message: err.message,
+        code: err.code,
+        fullError: err
+      })
+
+      const errorMsg = err.code === 'storage/unauthorized'
+        ? '업로드 권한이 없습니다. Firebase Storage 규칙을 확인해주세요.'
+        : err.code === 'storage/unauthenticated'
+        ? '인증이 필요합니다.'
+        : `이미지 업로드 실패: ${err.message}`
+
+      alert(errorMsg)
+
       // 실패 시에도 input 리셋
       if (orientationFileInputRef.current) {
         orientationFileInputRef.current.value = ''
