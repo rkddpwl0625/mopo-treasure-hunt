@@ -92,17 +92,19 @@ export default function AdminGameSettings() {
       )
       await updateDoc(questionRef, { [field]: value })
 
-      // 로컬 상태 업데이트
+      // 로컬 상태 업데이트 - 새로운 객체 생성
+      const updatedQuestion: Question = {
+        ...selectedQuestion,
+        [field]: value,
+      }
+
       const updatedQuestions = questions.map(q =>
         q.questionId === selectedQuestion.questionId
-          ? { ...q, [field]: value }
+          ? updatedQuestion
           : q
       )
       setQuestions(updatedQuestions)
-      setSelectedQuestion({
-        ...selectedQuestion,
-        [field]: value,
-      })
+      setSelectedQuestion(updatedQuestion)
     } catch (err) {
       console.error('업데이트 실패:', err)
       alert('업데이트 실패')
