@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useRef } from 'react'
 import { useNavigate, useParams } from 'react-router-dom'
 import { db, storage } from '@/utils/firebase'
 import {
@@ -32,6 +32,8 @@ export default function AdminGameSettings() {
   const [orientation, setOrientation] = useState<Orientation>({ story: '' })
   const [tempOrientationStory, setTempOrientationStory] = useState('')
   const [tempOrientationTitle, setTempOrientationTitle] = useState('')
+  const fileInputRef = useRef<HTMLInputElement>(null)
+  const orientationFileInputRef = useRef<HTMLInputElement>(null)
 
   useEffect(() => {
     loadQuestions()
@@ -156,9 +158,18 @@ export default function AdminGameSettings() {
       const downloadURL = await getDownloadURL(storageRef)
 
       await handleUpdateQuestion('imageUrl', downloadURL)
+
+      // 파일 input 리셋
+      if (fileInputRef.current) {
+        fileInputRef.current.value = ''
+      }
     } catch (err) {
       console.error('이미지 업로드 실패:', err)
       alert('이미지 업로드 실패')
+      // 실패 시에도 input 리셋
+      if (fileInputRef.current) {
+        fileInputRef.current.value = ''
+      }
     } finally {
       setSaving(false)
     }
@@ -190,9 +201,18 @@ export default function AdminGameSettings() {
       await uploadBytes(storageRef, file)
       const downloadURL = await getDownloadURL(storageRef)
       await handleUpdateOrientation('imageUrl', downloadURL)
+
+      // 파일 input 리셋
+      if (orientationFileInputRef.current) {
+        orientationFileInputRef.current.value = ''
+      }
     } catch (err) {
       console.error('오리엔테이션 이미지 업로드 실패:', err)
       alert('이미지 업로드 실패')
+      // 실패 시에도 input 리셋
+      if (orientationFileInputRef.current) {
+        orientationFileInputRef.current.value = ''
+      }
     } finally {
       setSaving(false)
     }
@@ -348,6 +368,7 @@ export default function AdminGameSettings() {
 
                 <label>이미지 업로드</label>
                 <input
+                  ref={fileInputRef}
                   type="file"
                   accept="image/*"
                   onChange={handleImageUpload}
@@ -470,6 +491,7 @@ export default function AdminGameSettings() {
           <div style={{ marginBottom: '1.5rem' }}>
             <label style={{ display: 'block', marginBottom: '0.5rem', fontWeight: 600 }}>이미지</label>
             <input
+              ref={orientationFileInputRef}
               type="file"
               accept="image/*"
               onChange={handleOrientationImageUpload}
