@@ -157,35 +157,26 @@ export default function ParticipantGame() {
           </div>
         </div>
 
-        <div className="game-content">
-          <div className="hint-panel">
-            <h3 style={{ marginBottom: '0.5rem', fontSize: '0.95rem' }}>💡 힌트</h3>
+        <div className="game-content-new">
+          {/* 힌트 아이콘 (왼쪽 위) */}
+          <div className="hint-icons">
             {currentQuestion.hints && currentQuestion.hints.length > 0 ? (
-              <div>
-                {currentQuestion.hints.map(hint => (
-                  <button
-                    key={hint.step}
-                    className="hint-button"
-                    onClick={() => toggleHint(hint.step)}
-                    disabled={result === 'correct'}
-                  >
-                    힌트 {hint.step}
-                  </button>
-                ))}
-                {currentQuestion.hints.map(hint =>
-                  visibleHints.includes(hint.step) ? (
-                    <div key={`content-${hint.step}`} className="hint-content">
-                      {hint.hint}
-                    </div>
-                  ) : null
-                )}
-              </div>
-            ) : (
-              <p style={{ color: '#999', fontSize: '0.9rem' }}>힌트 없음</p>
-            )}
+              currentQuestion.hints.map(hint => (
+                <button
+                  key={hint.step}
+                  className="hint-icon-btn"
+                  onClick={() => toggleHint(hint.step)}
+                  disabled={result === 'correct'}
+                  title={`힌트 ${hint.step}`}
+                >
+                  💡
+                </button>
+              ))
+            ) : null}
           </div>
 
-          <div className="question-panel">
+          {/* 문제 설명 (가운데) */}
+          <div className="question-panel-new">
             <h2 className="question-title">{currentQuestion.title}</h2>
             {currentQuestion.description && (
               <p className="question-description">{currentQuestion.description}</p>
@@ -199,7 +190,22 @@ export default function ParticipantGame() {
             )}
           </div>
 
-          <div className="answer-panel">
+          {/* 힌트 내용 (토글로 표시) */}
+          {currentQuestion.hints && currentQuestion.hints.length > 0 && visibleHints.length > 0 && (
+            <div className="hints-display">
+              {currentQuestion.hints.map(hint =>
+                visibleHints.includes(hint.step) ? (
+                  <div key={`content-${hint.step}`} className="hint-content-new">
+                    <strong>💡 힌트 {hint.step}</strong>
+                    <p>{hint.hint}</p>
+                  </div>
+                ) : null
+              )}
+            </div>
+          )}
+
+          {/* 정답 입력 (아래) */}
+          <div className="answer-panel-new">
             <input
               type="text"
               className="answer-input"
