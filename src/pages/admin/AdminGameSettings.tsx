@@ -32,6 +32,7 @@ export default function AdminGameSettings() {
   const [orientation, setOrientation] = useState<Orientation>({ story: '' })
   const [tempOrientationStory, setTempOrientationStory] = useState('')
   const [tempOrientationTitle, setTempOrientationTitle] = useState('')
+  const [uploadProgress, setUploadProgress] = useState('')
   const fileInputRef = useRef<HTMLInputElement>(null)
   const orientationFileInputRef = useRef<HTMLInputElement>(null)
 
@@ -158,46 +159,55 @@ export default function AdminGameSettings() {
     }
 
     setSaving(true)
+    setUploadProgress('파일 업로드 중...')
 
     try {
+      const filename = `${Date.now()}-${file.name}`
       const storageRef = ref(
         storage,
-        `games/${gameId}/questions/${selectedQuestion.questionId}/${Date.now()}-${file.name}`
+        `games/${gameId}/questions/${selectedQuestion.questionId}/${filename}`
       )
 
-      // 업로드 시작
-      console.log('파일 업로드 시작:', file.name)
-      const uploadTask = await uploadBytes(storageRef, file)
-      console.log('파일 업로드 완료:', uploadTask.metadata.name)
+      console.log('1️⃣ 파일 업로드 시작:', filename, '크기:', file.size)
+      setUploadProgress('Firebase에 업로드 중...')
 
-      // URL 가져오기
+      await uploadBytes(storageRef, file)
+      console.log('2️⃣ 파일 업로드 완료')
+      setUploadProgress('다운로드 URL 획득 중...')
+
       const downloadURL = await getDownloadURL(storageRef)
-      console.log('다운로드 URL 획득:', downloadURL)
+      console.log('3️⃣ 다운로드 URL 획득:', downloadURL)
+      setUploadProgress('데이터베이스 업데이트 중...')
 
-      // Firebase 업데이트
       await handleUpdateQuestion('imageUrl', downloadURL)
-      console.log('이미지 URL 저장 완료')
+      console.log('4️⃣ 이미지 URL 저장 완료')
 
       // 파일 input 리셋
       if (fileInputRef.current) {
         fileInputRef.current.value = ''
       }
 
-      alert('이미지 업로드 완료!')
+      setUploadProgress('')
+      alert('✅ 이미지 업로드 완료!')
     } catch (err: any) {
-      console.error('이미지 업로드 실패 상세:', {
+      console.error('❌ 이미지 업로드 실패:', {
         message: err.message,
         code: err.code,
         fullError: err
       })
 
-      const errorMsg = err.code === 'storage/unauthorized'
-        ? '업로드 권한이 없습니다. Firebase Storage 규칙을 확인해주세요.'
-        : err.code === 'storage/unauthenticated'
-        ? '인증이 필요합니다.'
-        : `이미지 업로드 실패: ${err.message}`
+      let errorMsg = '이미지 업로드 실패했습니다.'
+
+      if (err.code === 'storage/unauthorized' || err.code === 'storage/permission-denied') {
+        errorMsg = '❌ 업로드 권한이 없습니다.\n\nFirebase Storage 규칙을 확인하세요.\n콘솔에서 Storage > Rules 탭을 확인해주세요.'
+      } else if (err.code === 'storage/unauthenticated') {
+        errorMsg = '❌ 인증이 필요합니다.\n페이지를 새로고침해주세요.'
+      } else if (err.message) {
+        errorMsg = `❌ 오류: ${err.message}`
+      }
 
       alert(errorMsg)
+      setUploadProgress('')
 
       // 실패 시에도 input 리셋
       if (fileInputRef.current) {
@@ -205,6 +215,7 @@ export default function AdminGameSettings() {
       }
     } finally {
       setSaving(false)
+      setUploadProgress('')
     }
   }
 
@@ -438,6 +449,19 @@ export default function AdminGameSettings() {
                   onChange={handleImageUpload}
                   disabled={saving}
                 />
+                {uploadProgress && (
+                  <div style={{
+                    background: '#e3f2fd',
+                    color: '#1976d2',
+                    padding: '0.75rem',
+                    borderRadius: '6px',
+                    marginTop: '0.5rem',
+                    fontSize: '0.9rem',
+                    fontWeight: 600
+                  }}>
+                    ⏳ {uploadProgress}
+                  </div>
+                )}
                 {selectedQuestion.imageUrl && (
                   <div>
                     <img
