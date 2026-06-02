@@ -1,7 +1,8 @@
 import { useState } from 'react'
 import { useNavigate, useParams } from 'react-router-dom'
 import { db } from '@/utils/firebase'
-import { collection, addDoc, serverTimestamp } from 'firebase/firestore'
+import { collection, addDoc, serverTimestamp, getDocs } from 'firebase/firestore'
+import { Participant } from '@/types'
 import './Participant.css'
 
 export default function ParticipantRegister() {
@@ -49,17 +50,40 @@ export default function ParticipantRegister() {
 
     try {
       const participantRef = collection(db, `games/${gameId}/participants`)
-      const docRef = await addDoc(participantRef, {
-        groupName,
-        memberNames: memberList,
-        generation,
-        status: 'in_progress',
-        currentQuestion: 1,
-        completedQuestions: {},
-        createdAt: serverTimestamp(),
+
+      // 같은 조 이름과 멤버로 기존 참가자 확인
+      const snapshot = await getDocs(participantRef)
+      const sortedMemberList = [...memberList].sort()
+
+      const existingParticipant = snapshot.docs.find(doc => {
+        const data = doc.data() as Participant
+        const existingMembers = [...(data.memberNames || [])].sort()
+        return (
+          data.groupName === groupName &&
+          JSON.stringify(existingMembers) === JSON.stringify(sortedMemberList)
+        )
       })
 
-      navigate(`/orientation/${gameId}/${docRef.id}`)
+      let teamId: string
+      if (existingParticipant) {
+        // 기존 데이터 사용
+        teamId = existingParticipant.id
+        setError('') // 이전 게임 데이터를 불러왔습니다
+      } else {
+        // 새로 생성
+        const docRef = await addDoc(participantRef, {
+          groupName,
+          memberNames: memberList,
+          generation,
+          status: 'in_progress',
+          currentQuestion: 1,
+          completedQuestions: {},
+          createdAt: serverTimestamp(),
+        })
+        teamId = docRef.id
+      }
+
+      navigate(`/orientation/${gameId}/${teamId}`)
     } catch (err) {
       setError('등록 중 오류가 발생했습니다')
       console.error(err)
