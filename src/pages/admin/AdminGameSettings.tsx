@@ -23,6 +23,7 @@ export default function AdminGameSettings() {
   const [selectedQuestion, setSelectedQuestion] = useState<Question | null>(null)
   const [loading, setLoading] = useState(true)
   const [saving, setSaving] = useState(false)
+  const [isComposing, setIsComposing] = useState(false)
 
   useEffect(() => {
     loadQuestions()
@@ -185,16 +186,32 @@ export default function AdminGameSettings() {
                 <input
                   type="text"
                   value={selectedQuestion.title}
-                  onChange={(e) => handleUpdateQuestion('title', e.target.value)}
+                  onChange={(e) => {
+                    if (!isComposing) {
+                      handleUpdateQuestion('title', e.target.value)
+                    }
+                  }}
+                  onCompositionStart={() => setIsComposing(true)}
+                  onCompositionEnd={(e) => {
+                    setIsComposing(false)
+                    handleUpdateQuestion('title', e.currentTarget.value)
+                  }}
                   disabled={saving}
                 />
 
                 <label>설명</label>
                 <textarea
                   value={selectedQuestion.description}
-                  onChange={(e) =>
-                    handleUpdateQuestion('description', e.target.value)
-                  }
+                  onChange={(e) => {
+                    if (!isComposing) {
+                      handleUpdateQuestion('description', e.target.value)
+                    }
+                  }}
+                  onCompositionStart={() => setIsComposing(true)}
+                  onCompositionEnd={(e) => {
+                    setIsComposing(false)
+                    handleUpdateQuestion('description', e.currentTarget.value)
+                  }}
                   disabled={saving}
                 />
 
@@ -202,7 +219,16 @@ export default function AdminGameSettings() {
                 <input
                   type="text"
                   value={selectedQuestion.answer}
-                  onChange={(e) => handleUpdateQuestion('answer', e.target.value)}
+                  onChange={(e) => {
+                    if (!isComposing) {
+                      handleUpdateQuestion('answer', e.target.value)
+                    }
+                  }}
+                  onCompositionStart={() => setIsComposing(true)}
+                  onCompositionEnd={(e) => {
+                    setIsComposing(false)
+                    handleUpdateQuestion('answer', e.currentTarget.value)
+                  }}
                   disabled={saving}
                 />
 
@@ -236,9 +262,16 @@ export default function AdminGameSettings() {
                         type="text"
                         placeholder={`힌트 ${hint.step}`}
                         value={hint.hint}
-                        onChange={(e) =>
-                          handleUpdateHint(index, e.target.value)
-                        }
+                        onChange={(e) => {
+                          if (!isComposing) {
+                            handleUpdateHint(index, e.target.value)
+                          }
+                        }}
+                        onCompositionStart={() => setIsComposing(true)}
+                        onCompositionEnd={(e) => {
+                          setIsComposing(false)
+                          handleUpdateHint(index, e.currentTarget.value)
+                        }}
                         disabled={saving}
                       />
                       <button
