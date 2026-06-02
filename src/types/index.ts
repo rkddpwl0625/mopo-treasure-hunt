@@ -11,6 +11,7 @@ export interface Question {
   imageUrl?: string
   answer: string
   hints: Hint[]
+  nextLocationHint?: string
   createdAt: Date
 }
 

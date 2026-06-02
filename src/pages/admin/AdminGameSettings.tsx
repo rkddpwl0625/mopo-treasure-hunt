@@ -27,6 +27,7 @@ export default function AdminGameSettings() {
   const [tempAnswer, setTempAnswer] = useState('')
   const [tempTitle, setTempTitle] = useState('')
   const [tempDescription, setTempDescription] = useState('')
+  const [tempNextLocationHint, setTempNextLocationHint] = useState('')
   const [activeTab, setActiveTab] = useState<'questions' | 'orientation'>('questions')
   const [orientation, setOrientation] = useState<Orientation>({ story: '' })
   const [tempOrientationStory, setTempOrientationStory] = useState('')
@@ -40,6 +41,7 @@ export default function AdminGameSettings() {
     setTempAnswer('')
     setTempTitle('')
     setTempDescription('')
+    setTempNextLocationHint('')
   }, [selectedQuestion?.questionId])
 
   const loadQuestions = async () => {
@@ -318,6 +320,30 @@ export default function AdminGameSettings() {
                     }
                   }}
                   disabled={saving}
+                />
+
+                <label>다음 장소 이정표 (선택사항)</label>
+                <textarea
+                  value={tempNextLocationHint || selectedQuestion.nextLocationHint || ''}
+                  onChange={(e) => setTempNextLocationHint(e.target.value)}
+                  onBlur={() => {
+                    if (tempNextLocationHint || selectedQuestion.nextLocationHint) {
+                      handleUpdateQuestion('nextLocationHint', tempNextLocationHint)
+                      setTempNextLocationHint('')
+                    }
+                  }}
+                  placeholder="예) 영화 촬영지에서 나와서 왼쪽으로 돌아서 골목 안쪽으로 50m 진행하세요"
+                  disabled={saving}
+                  style={{
+                    width: '100%',
+                    padding: '0.75rem',
+                    border: '2px solid #ddd',
+                    borderRadius: '6px',
+                    fontSize: '1rem',
+                    minHeight: '80px',
+                    fontFamily: 'inherit',
+                    resize: 'vertical',
+                  }}
                 />
 
                 <label>이미지 업로드</label>

@@ -25,6 +25,7 @@ export default function ParticipantGame() {
   const [visibleHints, setVisibleHints] = useState<number[]>([])
   const [loading, setLoading] = useState(true)
   const [startTime] = useState(Date.now())
+  const [showLocationHint, setShowLocationHint] = useState(false)
 
   useEffect(() => {
     const loadData = async () => {
@@ -79,54 +80,56 @@ export default function ParticipantGame() {
 
     if (normalizedAnswer === normalizedCorrect) {
       setResult('correct')
-      const timeSpent = Math.floor((Date.now() - startTime) / 1000)
-
-      // 다음 문제로
-      setTimeout(async () => {
-        if (currentQuestionIndex + 1 < totalQuestions) {
-          setAnswer('')
-          setResult(null)
-          setVisibleHints([])
-          setCurrentQuestionIndex(currentQuestionIndex + 1)
-
-          // Firestore 업데이트
-          const participantRef = doc(
-            db,
-            `games/${gameId}/participants/${teamId}`
-          )
-          await updateDoc(participantRef, {
-            [`completedQuestions.q${currentQuestionIndex + 1}`]: {
-              correct: true,
-              attemptCount: 1,
-              completedAt: serverTimestamp(),
-              timeSpent,
-            },
-            currentQuestion: currentQuestionIndex + 2,
-          })
-        } else {
-          // 게임 완료
-          const participantRef = doc(
-            db,
-            `games/${gameId}/participants/${teamId}`
-          )
-          const totalTime = Math.floor((Date.now() - startTime) / 1000)
-          await updateDoc(participantRef, {
-            [`completedQuestions.q${currentQuestionIndex + 1}`]: {
-              correct: true,
-              attemptCount: 1,
-              completedAt: serverTimestamp(),
-              timeSpent,
-            },
-            status: 'completed',
-            completedAt: serverTimestamp(),
-          })
-
-          navigate(`/result/${gameId}/${teamId}`)
-        }
-      }, 1500)
+      setShowLocationHint(true)
     } else {
       setResult('incorrect')
       setAnswer('')
+    }
+  }
+
+  const handleNextQuestion = async () => {
+    const timeSpent = Math.floor((Date.now() - startTime) / 1000)
+
+    if (currentQuestionIndex + 1 < totalQuestions) {
+      setAnswer('')
+      setResult(null)
+      setShowLocationHint(false)
+      setVisibleHints([])
+      setCurrentQuestionIndex(currentQuestionIndex + 1)
+
+      // Firestore 업데이트
+      const participantRef = doc(
+        db,
+        `games/${gameId}/participants/${teamId}`
+      )
+      await updateDoc(participantRef, {
+        [`completedQuestions.q${currentQuestionIndex + 1}`]: {
+          correct: true,
+          attemptCount: 1,
+          completedAt: serverTimestamp(),
+          timeSpent,
+        },
+        currentQuestion: currentQuestionIndex + 2,
+      })
+    } else {
+      // 게임 완료
+      const participantRef = doc(
+        db,
+        `games/${gameId}/participants/${teamId}`
+      )
+      const totalTime = Math.floor((Date.now() - startTime) / 1000)
+      await updateDoc(participantRef, {
+        [`completedQuestions.q${currentQuestionIndex + 1}`]: {
+          correct: true,
+          attemptCount: 1,
+          completedAt: serverTimestamp(),
+          timeSpent,
+        },
+        status: 'completed',
+        completedAt: serverTimestamp(),
+      })
+
+      navigate(`/result/${gameId}/${teamId}`)
     }
   }
 
@@ -136,6 +139,46 @@ export default function ParticipantGame() {
     } else {
       setVisibleHints([...visibleHints, step])
     }
+  }
+
+  // 이정표 페이지 표시
+  if (showLocationHint) {
+    return (
+      <div className="participant-container">
+        <div className="participant-card" style={{ textAlign: 'center' }}>
+          <div style={{ marginBottom: '2rem' }}>
+            <span style={{ fontSize: '3rem', display: 'block', marginBottom: '1rem' }}>✓</span>
+            <h1 style={{ color: '#333', marginBottom: '0.5rem' }}>정답입니다!</h1>
+            <p style={{ color: '#666', fontSize: '0.95rem' }}>다음 장소로 이동해주세요</p>
+          </div>
+
+          {currentQuestion.nextLocationHint && (
+            <div style={{
+              background: 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)',
+              color: 'white',
+              padding: '2rem',
+              borderRadius: '12px',
+              marginBottom: '2rem',
+              lineHeight: 1.8,
+              fontSize: '1rem',
+              whiteSpace: 'pre-wrap',
+              textAlign: 'left'
+            }}>
+              <strong style={{ fontSize: '1.1rem', display: 'block', marginBottom: '1rem' }}>📍 다음 장소로 가는 길</strong>
+              {currentQuestion.nextLocationHint}
+            </div>
+          )}
+
+          <button
+            className="btn-submit"
+            onClick={handleNextQuestion}
+            style={{ fontSize: '1rem', padding: '0.75rem' }}
+          >
+            {currentQuestionIndex + 1 < totalQuestions ? '다음 문제로 →' : '결과 보기'}
+          </button>
+        </div>
+      </div>
+    )
   }
 
   return (
