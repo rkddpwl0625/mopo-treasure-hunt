@@ -24,6 +24,8 @@ export default function AdminGameSettings() {
   const [loading, setLoading] = useState(true)
   const [saving, setSaving] = useState(false)
   const [tempAnswer, setTempAnswer] = useState('')
+  const [tempTitle, setTempTitle] = useState('')
+  const [tempDescription, setTempDescription] = useState('')
 
   useEffect(() => {
     loadQuestions()
@@ -31,6 +33,8 @@ export default function AdminGameSettings() {
 
   useEffect(() => {
     setTempAnswer('')
+    setTempTitle('')
+    setTempDescription('')
   }, [selectedQuestion?.questionId])
 
   const loadQuestions = async () => {
@@ -189,17 +193,27 @@ export default function AdminGameSettings() {
                 <label>제목</label>
                 <input
                   type="text"
-                  value={selectedQuestion.title}
-                  onChange={(e) => handleUpdateQuestion('title', e.target.value)}
+                  value={tempTitle || selectedQuestion.title}
+                  onChange={(e) => setTempTitle(e.target.value)}
+                  onBlur={() => {
+                    if (tempTitle) {
+                      handleUpdateQuestion('title', tempTitle)
+                      setTempTitle('')
+                    }
+                  }}
                   disabled={saving}
                 />
 
                 <label>설명</label>
                 <textarea
-                  value={selectedQuestion.description}
-                  onChange={(e) =>
-                    handleUpdateQuestion('description', e.target.value)
-                  }
+                  value={tempDescription || selectedQuestion.description}
+                  onChange={(e) => setTempDescription(e.target.value)}
+                  onBlur={() => {
+                    if (tempDescription) {
+                      handleUpdateQuestion('description', tempDescription)
+                      setTempDescription('')
+                    }
+                  }}
                   disabled={saving}
                 />
 
