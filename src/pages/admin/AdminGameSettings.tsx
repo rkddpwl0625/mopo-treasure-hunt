@@ -33,6 +33,8 @@ export default function AdminGameSettings() {
   const [tempOrientationTitle, setTempOrientationTitle] = useState('')
   const [tempImageUrl, setTempImageUrl] = useState('')
   const [tempOrientationImageUrl, setTempOrientationImageUrl] = useState('')
+  const [uploading, setUploading] = useState(false)
+  const [uploadStatus, setUploadStatus] = useState('')
 
   useEffect(() => {
     loadQuestions()
@@ -142,6 +144,97 @@ export default function AdminGameSettings() {
     })
 
     handleUpdateQuestion('hints', hints)
+  }
+
+  const uploadToImgbb = async (file: File): Promise<string | null> => {
+    const apiKey = import.meta.env.VITE_IMGBB_API_KEY
+    if (!apiKey) {
+      alert('❌ Imgbb API 키가 설정되지 않았습니다')
+      return null
+    }
+
+    const formData = new FormData()
+    formData.append('image', file)
+
+    try {
+      setUploadStatus('⏳ Imgbb에 업로드 중...')
+      const response = await fetch(`https://api.imgbb.com/1/upload?key=${apiKey}`, {
+        method: 'POST',
+        body: formData,
+      })
+
+      if (!response.ok) {
+        throw new Error('Imgbb 업로드 실패')
+      }
+
+      const data = await response.json()
+      const imageUrl = data.data.image.url
+      setUploadStatus('✅ 업로드 완료!')
+      return imageUrl
+    } catch (err) {
+      console.error('Imgbb 업로드 오류:', err)
+      setUploadStatus('❌ 업로드 실패')
+      alert('이미지 업로드 실패: ' + (err instanceof Error ? err.message : '알 수 없는 오류'))
+      return null
+    }
+  }
+
+  const handleImageUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    if (!selectedQuestion || !e.target.files?.[0]) return
+
+    const file = e.target.files[0]
+
+    // 파일 크기 체크 (10MB)
+    if (file.size > 10 * 1024 * 1024) {
+      alert('파일 크기는 10MB 이하여야 합니다')
+      return
+    }
+
+    setUploading(true)
+    try {
+      const imageUrl = await uploadToImgbb(file)
+      if (imageUrl) {
+        await handleUpdateQuestion('imageUrl', imageUrl)
+        alert('✅ 이미지 업로드 및 저장 완료!')
+      }
+    } catch (err) {
+      console.error('이미지 처리 오류:', err)
+      alert('이미지 처리 실패')
+    } finally {
+      setUploading(false)
+      setUploadStatus('')
+      // 파일 input 리셋
+      e.target.value = ''
+    }
+  }
+
+  const handleOrientationImageUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    if (!e.target.files?.[0]) return
+
+    const file = e.target.files[0]
+
+    // 파일 크기 체크 (10MB)
+    if (file.size > 10 * 1024 * 1024) {
+      alert('파일 크기는 10MB 이하여야 합니다')
+      return
+    }
+
+    setUploading(true)
+    try {
+      const imageUrl = await uploadToImgbb(file)
+      if (imageUrl) {
+        await handleUpdateOrientation('imageUrl', imageUrl)
+        alert('✅ 이미지 업로드 및 저장 완료!')
+      }
+    } catch (err) {
+      console.error('오리엔테이션 이미지 처리 오류:', err)
+      alert('이미지 처리 실패')
+    } finally {
+      setUploading(false)
+      setUploadStatus('')
+      // 파일 input 리셋
+      e.target.value = ''
+    }
   }
 
   const handleSaveImageUrl = async () => {
@@ -347,13 +440,35 @@ export default function AdminGameSettings() {
                 />
 
                 <label>이미지 업로드</label>
+                <div style={{ marginBottom: '1rem' }}>
+                  <input
+                    type="file"
+                    accept="image/*"
+                    onChange={handleImageUpload}
+                    disabled={uploading || saving}
+                    style={{ marginBottom: '0.5rem' }}
+                  />
+                  {uploadStatus && (
+                    <div style={{
+                      background: '#e3f2fd',
+                      color: '#1976d2',
+                      padding: '0.75rem',
+                      borderRadius: '6px',
+                      fontSize: '0.9rem',
+                      fontWeight: 600
+                    }}>
+                      {uploadStatus}
+                    </div>
+                  )}
+                </div>
+
                 <div style={{ display: 'flex', gap: '0.5rem', marginBottom: '1rem' }}>
                   <input
                     type="text"
                     value={tempImageUrl}
                     onChange={(e) => setTempImageUrl(e.target.value)}
-                    placeholder="이미지 URL을 입력해주세요 (예: https://example.com/image.jpg)"
-                    disabled={saving}
+                    placeholder="또는 이미지 URL 직접 입력"
+                    disabled={saving || uploading}
                     style={{
                       flex: 1,
                       padding: '0.75rem',
@@ -364,7 +479,7 @@ export default function AdminGameSettings() {
                   />
                   <button
                     onClick={handleSaveImageUrl}
-                    disabled={saving || !tempImageUrl.trim()}
+                    disabled={saving || uploading || !tempImageUrl.trim()}
                     style={{
                       padding: '0.75rem 1.5rem',
                       background: '#667eea',
@@ -494,14 +609,34 @@ export default function AdminGameSettings() {
           </div>
 
           <div style={{ marginBottom: '1.5rem' }}>
-            <label style={{ display: 'block', marginBottom: '0.5rem', fontWeight: 600 }}>이미지 URL</label>
+            <label style={{ display: 'block', marginBottom: '0.5rem', fontWeight: 600 }}>이미지</label>
+            <input
+              type="file"
+              accept="image/*"
+              onChange={handleOrientationImageUpload}
+              disabled={uploading || saving}
+              style={{ marginBottom: '0.5rem' }}
+            />
+            {uploadStatus && (
+              <div style={{
+                background: '#e3f2fd',
+                color: '#1976d2',
+                padding: '0.75rem',
+                borderRadius: '6px',
+                fontSize: '0.9rem',
+                fontWeight: 600,
+                marginBottom: '0.5rem'
+              }}>
+                {uploadStatus}
+              </div>
+            )}
             <div style={{ display: 'flex', gap: '0.5rem' }}>
               <input
                 type="text"
                 value={tempOrientationImageUrl}
                 onChange={(e) => setTempOrientationImageUrl(e.target.value)}
-                placeholder="이미지 URL을 입력해주세요 (예: https://example.com/image.jpg)"
-                disabled={saving}
+                placeholder="또는 이미지 URL 직접 입력"
+                disabled={saving || uploading}
                 style={{
                   flex: 1,
                   padding: '0.75rem',
@@ -512,7 +647,7 @@ export default function AdminGameSettings() {
               />
               <button
                 onClick={handleSaveOrientationImageUrl}
-                disabled={saving || !tempOrientationImageUrl.trim()}
+                disabled={saving || uploading || !tempOrientationImageUrl.trim()}
                 style={{
                   padding: '0.75rem 1.5rem',
                   background: '#667eea',
