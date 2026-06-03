@@ -1,6 +1,6 @@
-import { useState, useEffect, useRef } from 'react'
+import { useState, useEffect } from 'react'
 import { useNavigate, useParams } from 'react-router-dom'
-import { db, storage } from '@/utils/firebase'
+import { db } from '@/utils/firebase'
 import {
   collection,
   query,
@@ -13,7 +13,6 @@ import {
   addDoc,
   serverTimestamp,
 } from 'firebase/firestore'
-import { ref, uploadBytes, getDownloadURL, uploadBytesResumable } from 'firebase/storage'
 import { Question, Hint, Orientation, Game } from '@/types'
 import './Admin.css'
 
@@ -32,9 +31,8 @@ export default function AdminGameSettings() {
   const [orientation, setOrientation] = useState<Orientation>({ story: '' })
   const [tempOrientationStory, setTempOrientationStory] = useState('')
   const [tempOrientationTitle, setTempOrientationTitle] = useState('')
-  const [uploadProgress, setUploadProgress] = useState('')
-  const fileInputRef = useRef<HTMLInputElement>(null)
-  const orientationFileInputRef = useRef<HTMLInputElement>(null)
+  const [tempImageUrl, setTempImageUrl] = useState('')
+  const [tempOrientationImageUrl, setTempOrientationImageUrl] = useState('')
 
   useEffect(() => {
     loadQuestions()
@@ -146,82 +144,22 @@ export default function AdminGameSettings() {
     handleUpdateQuestion('hints', hints)
   }
 
-  const handleImageUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
-    if (!selectedQuestion || !e.target.files?.[0]) return
-
-    const file = e.target.files[0]
-
-    // 파일 크기 체크 (5MB 이상이면 거절)
-    if (file.size > 5 * 1024 * 1024) {
-      alert('파일 크기는 5MB 이하여야 합니다')
-      if (fileInputRef.current) {
-        fileInputRef.current.value = ''
-      }
+  const handleSaveImageUrl = async () => {
+    if (!selectedQuestion || !tempImageUrl.trim()) {
+      alert('이미지 URL을 입력해주세요')
       return
     }
 
     setSaving(true)
-    setUploadProgress('이미지 압축 중...')
-
     try {
-      // 이미지 압축
-      console.log('1️⃣ 이미지 압축 시작')
-      const compressedBlob = await compressImage(file)
-
-      const filename = `${Date.now()}-${file.name}`
-      const storageRef = ref(
-        storage,
-        `games/${gameId}/questions/${selectedQuestion.questionId}/${filename}`
-      )
-
-      console.log('2️⃣ Firebase에 업로드 시작:', filename)
-      setUploadProgress('Firebase에 업로드 중...')
-
-      await uploadBytes(storageRef, compressedBlob)
-      console.log('3️⃣ Firebase 업로드 완료')
-      setUploadProgress('다운로드 URL 획득 중...')
-
-      const downloadURL = await getDownloadURL(storageRef)
-      console.log('4️⃣ 다운로드 URL 획득:', downloadURL)
-      setUploadProgress('데이터베이스 업데이트 중...')
-
-      await handleUpdateQuestion('imageUrl', downloadURL)
-      console.log('5️⃣ 이미지 URL 저장 완료')
-
-      // 파일 input 리셋
-      if (fileInputRef.current) {
-        fileInputRef.current.value = ''
-      }
-
-      setUploadProgress('')
-      alert('✅ 이미지 업로드 완료!')
-    } catch (err: any) {
-      console.error('❌ 이미지 업로드 실패:', {
-        message: err.message,
-        code: err.code,
-        fullError: err
-      })
-
-      let errorMsg = '이미지 업로드 실패했습니다.'
-
-      if (err.code === 'storage/unauthorized' || err.code === 'storage/permission-denied') {
-        errorMsg = '❌ 업로드 권한이 없습니다.\n\nFirebase Storage 규칙을 확인하세요.\n콘솔에서 Storage > Rules 탭을 확인해주세요.'
-      } else if (err.code === 'storage/unauthenticated') {
-        errorMsg = '❌ 인증이 필요합니다.\n페이지를 새로고침해주세요.'
-      } else if (err.message) {
-        errorMsg = `❌ 오류: ${err.message}`
-      }
-
-      alert(errorMsg)
-      setUploadProgress('')
-
-      // 실패 시에도 input 리셋
-      if (fileInputRef.current) {
-        fileInputRef.current.value = ''
-      }
+      await handleUpdateQuestion('imageUrl', tempImageUrl)
+      setTempImageUrl('')
+      alert('✅ 이미지 URL 저장 완료!')
+    } catch (err) {
+      console.error('이미지 URL 저장 실패:', err)
+      alert('이미지 URL 저장 실패')
     } finally {
       setSaving(false)
-      setUploadProgress('')
     }
   }
 
@@ -240,114 +178,21 @@ export default function AdminGameSettings() {
     }
   }
 
-  // 이미지 압축 함수 (핸드폰 지원)
-  const compressImage = (file: File): Promise<Blob> => {
-    return new Promise((resolve, reject) => {
-      const reader = new FileReader()
-      reader.readAsDataURL(file)
-      reader.onload = (event) => {
-        const img = new Image()
-        img.src = event.target?.result as string
-        img.onload = () => {
-          const canvas = document.createElement('canvas')
-          let width = img.width
-          let height = img.height
 
-          // 2000px 이상이면 줄이기
-          if (width > 2000 || height > 2000) {
-            const ratio = Math.min(2000 / width, 2000 / height)
-            width = Math.round(width * ratio)
-            height = Math.round(height * ratio)
-          }
-
-          canvas.width = width
-          canvas.height = height
-          const ctx = canvas.getContext('2d')!
-          ctx.drawImage(img, 0, 0, width, height)
-
-          // JPEG 형식으로 압축 (품질 0.8)
-          canvas.toBlob(
-            (blob) => {
-              if (blob) {
-                console.log(`✅ 이미지 압축: ${(file.size / 1024).toFixed(0)}KB → ${(blob.size / 1024).toFixed(0)}KB`)
-                resolve(blob)
-              } else {
-                reject(new Error('이미지 압축 실패'))
-              }
-            },
-            'image/jpeg',
-            0.8
-          )
-        }
-        img.onerror = () => reject(new Error('이미지 로드 실패'))
-      }
-      reader.onerror = () => reject(new Error('파일 읽기 실패'))
-    })
-  }
-
-  const handleOrientationImageUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
-    if (!e.target.files?.[0]) return
-
-    const file = e.target.files[0]
-
-    // 파일 크기 체크 (5MB 이상이면 거절)
-    if (file.size > 5 * 1024 * 1024) {
-      alert('파일 크기는 5MB 이하여야 합니다')
-      if (orientationFileInputRef.current) {
-        orientationFileInputRef.current.value = ''
-      }
+  const handleSaveOrientationImageUrl = async () => {
+    if (!tempOrientationImageUrl.trim()) {
+      alert('이미지 URL을 입력해주세요')
       return
     }
 
     setSaving(true)
-    setUploadProgress('이미지 압축 중...')
-
     try {
-      // 이미지 압축
-      console.log('1️⃣ 오리엔테이션 이미지 압축 시작')
-      const compressedBlob = await compressImage(file)
-
-      const storageRef = ref(storage, `games/${gameId}/orientation/${Date.now()}-${file.name}`)
-
-      console.log('2️⃣ Firebase에 오리엔테이션 이미지 업로드 시작')
-      setUploadProgress('Firebase에 업로드 중...')
-
-      await uploadBytes(storageRef, compressedBlob)
-      console.log('3️⃣ Firebase 오리엔테이션 이미지 업로드 완료')
-      setUploadProgress('다운로드 URL 획득 중...')
-
-      const downloadURL = await getDownloadURL(storageRef)
-      console.log('4️⃣ 오리엔테이션 이미지 URL 획득:', downloadURL)
-      setUploadProgress('데이터베이스 업데이트 중...')
-
-      await handleUpdateOrientation('imageUrl', downloadURL)
-      console.log('5️⃣ 오리엔테이션 이미지 URL 저장 완료')
-
-      // 파일 input 리셋
-      if (orientationFileInputRef.current) {
-        orientationFileInputRef.current.value = ''
-      }
-
-      alert('이미지 업로드 완료!')
-    } catch (err: any) {
-      console.error('오리엔테이션 이미지 업로드 실패 상세:', {
-        message: err.message,
-        code: err.code,
-        fullError: err
-      })
-
-      const errorMsg = err.code === 'storage/unauthorized'
-        ? '업로드 권한이 없습니다. Firebase Storage 규칙을 확인해주세요.'
-        : err.code === 'storage/unauthenticated'
-        ? '인증이 필요합니다.'
-        : `이미지 업로드 실패: ${err.message}`
-
-      alert(errorMsg)
-
-      // 실패 시에도 input 리셋
-      if (orientationFileInputRef.current) {
-        orientationFileInputRef.current.value = ''
-      }
+      await handleUpdateOrientation('imageUrl', tempOrientationImageUrl)
+      setTempOrientationImageUrl('')
+      alert('✅ 이미지 URL 저장 완료!')
+    } catch (err) {
+      console.error('오리엔테이션 이미지 URL 저장 실패:', err)
+      alert('이미지 URL 저장 실패')
     } finally {
       setSaving(false)
     }
@@ -502,26 +347,38 @@ export default function AdminGameSettings() {
                 />
 
                 <label>이미지 업로드</label>
-                <input
-                  ref={fileInputRef}
-                  type="file"
-                  accept="image/*"
-                  onChange={handleImageUpload}
-                  disabled={saving}
-                />
-                {uploadProgress && (
-                  <div style={{
-                    background: '#e3f2fd',
-                    color: '#1976d2',
-                    padding: '0.75rem',
-                    borderRadius: '6px',
-                    marginTop: '0.5rem',
-                    fontSize: '0.9rem',
-                    fontWeight: 600
-                  }}>
-                    ⏳ {uploadProgress}
-                  </div>
-                )}
+                <div style={{ display: 'flex', gap: '0.5rem', marginBottom: '1rem' }}>
+                  <input
+                    type="text"
+                    value={tempImageUrl}
+                    onChange={(e) => setTempImageUrl(e.target.value)}
+                    placeholder="이미지 URL을 입력해주세요 (예: https://example.com/image.jpg)"
+                    disabled={saving}
+                    style={{
+                      flex: 1,
+                      padding: '0.75rem',
+                      border: '2px solid #ddd',
+                      borderRadius: '6px',
+                      fontSize: '1rem',
+                    }}
+                  />
+                  <button
+                    onClick={handleSaveImageUrl}
+                    disabled={saving || !tempImageUrl.trim()}
+                    style={{
+                      padding: '0.75rem 1.5rem',
+                      background: '#667eea',
+                      color: 'white',
+                      border: 'none',
+                      borderRadius: '6px',
+                      cursor: 'pointer',
+                      fontWeight: 600,
+                      whiteSpace: 'nowrap',
+                    }}
+                  >
+                    저장
+                  </button>
+                </div>
                 {selectedQuestion.imageUrl && (
                   <div>
                     <img
@@ -637,18 +494,39 @@ export default function AdminGameSettings() {
           </div>
 
           <div style={{ marginBottom: '1.5rem' }}>
-            <label style={{ display: 'block', marginBottom: '0.5rem', fontWeight: 600 }}>이미지</label>
-            <input
-              ref={orientationFileInputRef}
-              type="file"
-              accept="image/*"
-              onChange={handleOrientationImageUpload}
-              disabled={saving}
-              style={{
-                display: 'block',
-                marginBottom: '0.5rem',
-              }}
-            />
+            <label style={{ display: 'block', marginBottom: '0.5rem', fontWeight: 600 }}>이미지 URL</label>
+            <div style={{ display: 'flex', gap: '0.5rem' }}>
+              <input
+                type="text"
+                value={tempOrientationImageUrl}
+                onChange={(e) => setTempOrientationImageUrl(e.target.value)}
+                placeholder="이미지 URL을 입력해주세요 (예: https://example.com/image.jpg)"
+                disabled={saving}
+                style={{
+                  flex: 1,
+                  padding: '0.75rem',
+                  border: '2px solid #ddd',
+                  borderRadius: '6px',
+                  fontSize: '1rem',
+                }}
+              />
+              <button
+                onClick={handleSaveOrientationImageUrl}
+                disabled={saving || !tempOrientationImageUrl.trim()}
+                style={{
+                  padding: '0.75rem 1.5rem',
+                  background: '#667eea',
+                  color: 'white',
+                  border: 'none',
+                  borderRadius: '6px',
+                  cursor: 'pointer',
+                  fontWeight: 600,
+                  whiteSpace: 'nowrap',
+                }}
+              >
+                저장
+              </button>
+            </div>
             {orientation.imageUrl && (
               <div style={{ marginTop: '1rem' }}>
                 <img
