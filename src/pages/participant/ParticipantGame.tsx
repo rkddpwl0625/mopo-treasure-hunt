@@ -237,7 +237,7 @@ export default function ParticipantGame() {
 
           {/* 문제 설명 (가운데) */}
           <div className="question-panel-new">
-            <h2 className="question-title">{currentQuestion.title}</h2>
+            <h2 className="question-title" style={{ whiteSpace: 'pre-wrap' }}>{currentQuestion.title}</h2>
             {currentQuestion.description && (
               <p className="question-description">{currentQuestion.description}</p>
             )}

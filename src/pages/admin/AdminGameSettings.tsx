@@ -377,8 +377,7 @@ export default function AdminGameSettings() {
                 <h3>Q{selectedQuestion.order} 수정</h3>
 
                 <label>제목</label>
-                <input
-                  type="text"
+                <textarea
                   value={tempTitle || selectedQuestion.title}
                   onChange={(e) => setTempTitle(e.target.value)}
                   onBlur={() => {
@@ -388,6 +387,16 @@ export default function AdminGameSettings() {
                     }
                   }}
                   disabled={saving}
+                  style={{
+                    width: '100%',
+                    padding: '0.75rem',
+                    border: '2px solid #ddd',
+                    borderRadius: '6px',
+                    fontSize: '1rem',
+                    minHeight: '60px',
+                    fontFamily: 'inherit',
+                    resize: 'vertical',
+                  }}
                 />
 
                 <label>설명</label>
