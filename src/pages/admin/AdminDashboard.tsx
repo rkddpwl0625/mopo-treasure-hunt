@@ -8,6 +8,8 @@ import {
   where,
   addDoc,
   serverTimestamp,
+  deleteDoc,
+  doc,
 } from 'firebase/firestore'
 import { Game } from '@/types'
 import './Admin.css'
@@ -75,6 +77,21 @@ export default function AdminDashboard() {
       console.error('게임 생성 실패:', err)
     } finally {
       setCreating(false)
+    }
+  }
+
+  const handleDeleteGame = async (gameId: string, gameTitle: string) => {
+    if (!window.confirm(`"${gameTitle}" 게임을 삭제하시겠습니까?\n삭제된 데이터는 복구할 수 없습니다.`)) {
+      return
+    }
+
+    try {
+      await deleteDoc(doc(db, 'games', gameId))
+      await loadGames()
+      alert('게임이 삭제되었습니다.')
+    } catch (err) {
+      console.error('게임 삭제 실패:', err)
+      alert('게임 삭제에 실패했습니다.')
     }
   }
 
@@ -165,6 +182,23 @@ export default function AdminDashboard() {
                     onClick={() => navigate(`/admin/games/${game.gameId}/results`)}
                   >
                     📊 현황
+                  </button>
+                  <button
+                    style={{
+                      flex: 1,
+                      padding: '0.5rem',
+                      borderRadius: '6px',
+                      cursor: 'pointer',
+                      fontSize: '0.9rem',
+                      fontWeight: '600',
+                      background: '#f5576c',
+                      color: 'white',
+                      border: 'none',
+                      transition: 'all 0.2s ease',
+                    }}
+                    onClick={() => handleDeleteGame(game.gameId, game.title)}
+                  >
+                    🗑️ 삭제
                   </button>
                 </div>
               </div>

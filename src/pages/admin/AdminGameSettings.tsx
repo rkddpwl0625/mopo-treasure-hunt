@@ -36,6 +36,8 @@ export default function AdminGameSettings() {
   const [tempOrientationImageUrl, setTempOrientationImageUrl] = useState('')
   const [uploading, setUploading] = useState(false)
   const [uploadStatus, setUploadStatus] = useState('')
+  const [game, setGame] = useState<Game | null>(null)
+  const [tempGameCode, setTempGameCode] = useState('')
 
   useEffect(() => {
     loadQuestions()
@@ -57,6 +59,8 @@ export default function AdminGameSettings() {
 
       if (gameSnap.exists()) {
         const gameData = gameSnap.data() as Game
+        setGame(gameData)
+        setTempGameCode(gameData.code || '')
         if (gameData.orientation) {
           setOrientation(gameData.orientation)
           setTempOrientationStory(gameData.orientation.story || '')
@@ -293,6 +297,31 @@ export default function AdminGameSettings() {
     }
   }
 
+  const handleUpdateGameCode = async () => {
+    if (!tempGameCode.trim()) {
+      alert('입장 코드를 입력해주세요')
+      return
+    }
+
+    if (tempGameCode === game?.code) {
+      alert('동일한 코드입니다')
+      return
+    }
+
+    setSaving(true)
+    try {
+      const gameRef = doc(db, `games/${gameId}`)
+      await updateDoc(gameRef, { code: tempGameCode })
+      setGame({ ...game!, code: tempGameCode })
+      alert('✅ 입장 코드가 변경되었습니다!')
+    } catch (err) {
+      console.error('입장 코드 변경 실패:', err)
+      alert('입장 코드 변경 실패')
+    } finally {
+      setSaving(false)
+    }
+  }
+
   if (loading) {
     return (
       <div className="settings-container">
@@ -311,6 +340,51 @@ export default function AdminGameSettings() {
 
       <div className="settings-card">
         <h2>📝 게임 설정</h2>
+
+        {/* 입장 코드 설정 */}
+        {game && (
+          <div style={{
+            background: '#f9f9f9',
+            padding: '1.5rem',
+            borderRadius: '8px',
+            marginBottom: '2rem',
+            border: '1px solid #eee'
+          }}>
+            <h3 style={{ marginBottom: '1rem', color: '#333' }}>🔑 입장 코드</h3>
+            <div style={{ display: 'flex', gap: '0.5rem' }}>
+              <input
+                type="text"
+                value={tempGameCode}
+                onChange={(e) => setTempGameCode(e.target.value)}
+                placeholder="입장 코드"
+                disabled={saving}
+                style={{
+                  flex: 1,
+                  padding: '0.75rem',
+                  border: '2px solid #ddd',
+                  borderRadius: '6px',
+                  fontSize: '1rem',
+                }}
+              />
+              <button
+                onClick={handleUpdateGameCode}
+                disabled={saving || !tempGameCode.trim()}
+                style={{
+                  padding: '0.75rem 1.5rem',
+                  background: '#667eea',
+                  color: 'white',
+                  border: 'none',
+                  borderRadius: '6px',
+                  cursor: 'pointer',
+                  fontWeight: 600,
+                  whiteSpace: 'nowrap',
+                }}
+              >
+                변경
+              </button>
+            </div>
+          </div>
+        )}
 
         {/* 탭 버튼 */}
         <div style={{ display: 'flex', gap: '1rem', marginBottom: '2rem', borderBottom: '2px solid #ddd', paddingBottom: '1rem' }}>
