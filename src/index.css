@@ -6,6 +6,8 @@
   -moz-osx-font-smoothing: grayscale;
   /* 모바일 뷰포트 높이 */
   --vh: 1vh;
+  /* 줄간격 */
+  line-height: 1.6;
 }
 
 * {
