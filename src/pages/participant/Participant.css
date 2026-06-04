@@ -26,8 +26,8 @@
 .participant-card {
   background: white;
   border-radius: 16px;
-  padding: 1.5rem 1rem;
-  max-width: 90%;
+  padding: 1.5rem 0.5rem;
+  max-width: 98%;
   width: 100%;
   margin: 4rem auto 2rem;
   box-shadow: 0 10px 40px rgba(0, 0, 0, 0.15);
@@ -151,7 +151,7 @@
   justify-content: space-between;
   align-items: center;
   margin-bottom: 2rem;
-  padding: 0 2rem 1rem 2rem;
+  padding: 0 0.5rem 1rem 0.5rem;
   border-bottom: 2px solid #ddd;
 }
 
