@@ -512,12 +512,12 @@
   }
 
   .results-table {
-    font-size: 0.85rem;
+    font-size: 0.9rem;
   }
 
   .results-table th,
   .results-table td {
-    padding: 0.5rem;
+    padding: 1rem 0.75rem;
   }
 
   label {

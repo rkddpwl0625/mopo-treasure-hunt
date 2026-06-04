@@ -10,9 +10,25 @@ import {
   doc,
   writeBatch,
   getDocs,
+  Timestamp,
 } from 'firebase/firestore'
 import { Participant } from '@/types'
 import './Admin.css'
+
+// Firebase Timestamp를 숫자(초)로 변환하는 함수
+const getTimestampSeconds = (timestamp: any): number => {
+  if (!timestamp) return 0
+  if (timestamp instanceof Timestamp) {
+    return timestamp.seconds
+  }
+  if (typeof timestamp === 'object' && timestamp.seconds !== undefined) {
+    return timestamp.seconds
+  }
+  if (typeof timestamp === 'number') {
+    return timestamp
+  }
+  return 0
+}
 
 export default function AdminGameResults() {
   const navigate = useNavigate()
@@ -137,13 +153,9 @@ export default function AdminGameResults() {
             <tbody>
               {participants.map((p, index) => {
                 const completedCount = Object.keys(p.completedQuestions).length
-                const timeSpent = p.completedAt
-                  ? Math.floor(
-                      (new Date(p.completedAt as any).getTime() -
-                        new Date(p.createdAt).getTime()) /
-                        1000
-                    )
-                  : 0
+                const createdSeconds = getTimestampSeconds(p.createdAt)
+                const completedSeconds = getTimestampSeconds(p.completedAt)
+                const timeSpent = completedSeconds - createdSeconds
 
                 return (
                   <tr key={p.teamId}>
