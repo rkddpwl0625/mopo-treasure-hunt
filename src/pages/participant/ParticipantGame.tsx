@@ -152,6 +152,23 @@ export default function ParticipantGame() {
             <p style={{ color: '#666', fontSize: '0.95rem' }}>다음 장소로 이동해주세요</p>
           </div>
 
+          {currentQuestion.nextLocationMission && (
+            <div style={{
+              background: 'linear-gradient(135deg, #f093fb 0%, #f5576c 100%)',
+              color: 'white',
+              padding: '1.5rem',
+              borderRadius: '12px',
+              marginBottom: '1.5rem',
+              lineHeight: 1.8,
+              fontSize: '1rem',
+              whiteSpace: 'pre-wrap',
+              textAlign: 'center',
+              fontWeight: 600
+            }}>
+              🎯 {currentQuestion.nextLocationMission}
+            </div>
+          )}
+
           {currentQuestion.nextLocationHint && (
             <div style={{
               background: 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)',

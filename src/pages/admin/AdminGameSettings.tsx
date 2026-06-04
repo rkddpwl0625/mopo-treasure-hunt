@@ -26,6 +26,7 @@ export default function AdminGameSettings() {
   const [tempAnswer, setTempAnswer] = useState('')
   const [tempTitle, setTempTitle] = useState('')
   const [tempDescription, setTempDescription] = useState('')
+  const [tempNextLocationMission, setTempNextLocationMission] = useState('')
   const [tempNextLocationHint, setTempNextLocationHint] = useState('')
   const [activeTab, setActiveTab] = useState<'questions' | 'orientation'>('questions')
   const [orientation, setOrientation] = useState<Orientation>({ story: '' })
@@ -44,6 +45,7 @@ export default function AdminGameSettings() {
     setTempAnswer('')
     setTempTitle('')
     setTempDescription('')
+    setTempNextLocationMission('')
     setTempNextLocationHint('')
   }, [selectedQuestion?.questionId])
 
@@ -413,6 +415,30 @@ export default function AdminGameSettings() {
                     }
                   }}
                   disabled={saving}
+                />
+
+                <label>다음 장소 미션 (선택사항)</label>
+                <textarea
+                  value={tempNextLocationMission || selectedQuestion.nextLocationMission || ''}
+                  onChange={(e) => setTempNextLocationMission(e.target.value)}
+                  onBlur={() => {
+                    if (tempNextLocationMission) {
+                      handleUpdateQuestion('nextLocationMission', tempNextLocationMission)
+                      setTempNextLocationMission('')
+                    }
+                  }}
+                  placeholder="예) 다음 장소에서 빨간 간판을 찾아보세요!"
+                  disabled={saving}
+                  style={{
+                    width: '100%',
+                    padding: '0.75rem',
+                    border: '2px solid #ddd',
+                    borderRadius: '6px',
+                    fontSize: '1rem',
+                    minHeight: '60px',
+                    fontFamily: 'inherit',
+                    resize: 'vertical',
+                  }}
                 />
 
                 <label>다음 장소 이정표 (선택사항)</label>
