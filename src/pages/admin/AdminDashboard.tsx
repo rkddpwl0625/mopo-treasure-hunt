@@ -10,6 +10,7 @@ import {
   serverTimestamp,
   deleteDoc,
   doc,
+  getDoc,
 } from 'firebase/firestore'
 import { Game } from '@/types'
 import './Admin.css'
@@ -75,6 +76,49 @@ export default function AdminDashboard() {
       await loadGames()
     } catch (err) {
       console.error('게임 생성 실패:', err)
+    } finally {
+      setCreating(false)
+    }
+  }
+
+  const handleDuplicateGame = async (gameId: string, gameTitle: string) => {
+    try {
+      setCreating(true)
+
+      // 기존 게임 정보 가져오기
+      const gameDoc = await getDoc(doc(db, 'games', gameId))
+      if (!gameDoc.exists()) {
+        alert('게임을 찾을 수 없습니다.')
+        return
+      }
+
+      const gameData = gameDoc.data()
+      const newCode = Math.random().toString().slice(2, 8)
+
+      // 새 게임 생성
+      const newGameRef = await addDoc(collection(db, 'games'), {
+        title: `${gameTitle} (복사)`,
+        status: 'active',
+        code: newCode,
+        createdAt: serverTimestamp(),
+        orientation: gameData.orientation || {},
+      })
+
+      // 기존 게임의 모든 문제 복사
+      const questionsSnapshot = await getDocs(collection(db, `games/${gameId}/questions`))
+      for (const questionDoc of questionsSnapshot.docs) {
+        const questionData = questionDoc.data()
+        await addDoc(collection(db, `games/${newGameRef.id}/questions`), {
+          ...questionData,
+          createdAt: serverTimestamp(),
+        })
+      }
+
+      await loadGames()
+      alert(`게임이 복사되었습니다!\n새 입장 코드: ${newCode}`)
+    } catch (err) {
+      console.error('게임 복사 실패:', err)
+      alert('게임 복사에 실패했습니다.')
     } finally {
       setCreating(false)
     }
@@ -182,6 +226,24 @@ export default function AdminDashboard() {
                     onClick={() => navigate(`/admin/games/${game.gameId}/results`)}
                   >
                     📊 현황
+                  </button>
+                  <button
+                    style={{
+                      flex: 1,
+                      padding: '0.5rem',
+                      borderRadius: '6px',
+                      cursor: 'pointer',
+                      fontSize: '0.9rem',
+                      fontWeight: '600',
+                      background: '#667eea',
+                      color: 'white',
+                      border: 'none',
+                      transition: 'all 0.2s ease',
+                    }}
+                    onClick={() => handleDuplicateGame(game.gameId, game.title)}
+                    disabled={creating}
+                  >
+                    📋 복사
                   </button>
                   <button
                     style={{
